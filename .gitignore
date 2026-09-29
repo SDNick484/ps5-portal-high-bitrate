@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+config.json
+experiments/
+captures/
+research/
+*.pcap
+*.pcapng
+*.log
+.DS_Store
+.env
+*.pem
+*.key

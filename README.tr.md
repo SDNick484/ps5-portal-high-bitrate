@@ -1,0 +1,37 @@
+# Portal Bitrate Lab — Türkçe
+
+Mac üzerinden kendi PS5 ve Portal cihazların için **geçici yüksek bitrate isteği**. Çalışan prototip Portal 7.1.7 üzerinde denendi. Her firmware ve ağda çalışması garanti değil. Public paketleme çevrimdışı test edildi; başka cihazlarda canlı doğrulama bekliyor.
+
+- 65 Mbps hedefinde PS5 yaklaşık 63 Mbps bildirdi; kullanıcı Portal'da 58 Mbps gördü.
+- 100 Mbps hedefinde PS5 yaklaşık 97 Mbps bildirdi; kullanıcı 84 Mbps civarı gördü.
+- Bunlar sürekli hız veya gecikme garantisi değildir.
+- 4K deneyi 720p'ye düştü. Bu pakette 4K seçeneği yok; çalışan seçenek 1080p yüksek bitrate.
+
+## Kurulum
+
+1. Python 3.10+ kurulu Mac'te projeyi indir veya klonla.
+2. `Setup.command` aç. Bağımlılıklar yerel `.venv` klasörüne kurulur.
+3. `config.json` içindeki örnek IP'leri kendi PS5 ve Portal adreslerinle değiştir; Mac ağ arayüzünü yaz. `networksetup -listallhardwareports` ile arayüzü bulabilirsin.
+4. Cihazlar aynı yerel ağda olmalı. Konuk ağı/istemci izolasyonu olmamalı. PS5 için Ethernet tercih et.
+
+## Kullanım
+
+1. Portal'ın PS5 bağlantısını kes; PS5 açık kalsın.
+2. `Start.command` aç, 65 veya 100 seç, Enter'a bas. Parolayı yalnız Mac'in sudo istemine gir.
+3. **READY** mesajından sonra Portal'dan bağlan.
+4. `Startup packet modified` ve ardından hedef doğrulamasını bekle.
+5. Program ağ yolunu geri yükleyince Mac aradan çıkar. Aynı oturumda yeniden çalıştırman gerekmez.
+
+Kalıcı cihaz değişikliği yapılmaz. Her yeni oturumda işlem gerekir. Normal ayara dönmek için bağlantıyı kapatıp başlatıcı olmadan yeniden bağlan.
+
+65/100 seçimini aynı hareketli sahnede karşılaştır. Yüksek bitrate daha fazla ağ yükü oluşturabilir; daha düşük gecikme garantisi yok. Mevcut ekran 1080p kalır.
+
+## Sonuçlar ve hatalar
+
+- `NOT APPLIED`: yeni başlangıç paketi yakalanmadı, değişiklik yapılmadı.
+- `UNCONFIRMED`: paket değişti ama yüksek hedef doğrulanmadı.
+- `restoration_errors`: boş olmalı. Hata varsa [İngilizce kurtarma adımlarını](README.md#troubleshooting-and-recovery) uygula.
+
+Aktarma en fazla 40 saniye; başlangıç ve temizleme ek süre alabilir. Ayrı kurtarma süreci 55 saniye sonra özgün ağ ayarlarını geri yüklemeyi dener. Mac kapanırsa kurtarma çalışamaz.
+
+Özel IP'ler, raporlar ve ham paket kayıtları yerel kalır. Ham kayıtları GitHub'a yükleme. Bu araç jailbreak değildir; Sony ile bağlantısı yoktur.
