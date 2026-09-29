@@ -1,4 +1,4 @@
-# Portal Bitrate Lab
+# PS5 Portal High Bitrate Hack
 
 Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote Play bitrate on your own PlayStation Portal. Includes 65 Mbps and 100 Mbps target profiles, a bounded relay, independent packet-egress verification, and network restoration.
 

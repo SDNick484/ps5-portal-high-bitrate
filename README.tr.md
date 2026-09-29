@@ -1,4 +1,4 @@
-# Portal Bitrate Lab — Türkçe
+# PS5 Portal High Bitrate Hack — Türkçe
 
 Mac üzerinden kendi PS5 ve Portal cihazların için **geçici yüksek bitrate isteği**. Çalışan prototip Portal 7.1.7 üzerinde denendi. Her firmware ve ağda çalışması garanti değil. Public paketleme çevrimdışı test edildi; başka cihazlarda canlı doğrulama bekliyor.
 
