@@ -1,6 +1,6 @@
-# PS5 Portal High Bitrate Hack
+# PS5 Portal High Bitrate
 
-Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote Play bitrate on your own PlayStation Portal. Includes 65 Mbps and 100 Mbps target profiles, a bounded relay, independent packet-egress verification, and network restoration.
+Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote Play bitrate on your own PlayStation Portal. Includes 65, 100 and experimental 200 Mbps target profiles, a bounded relay, independent packet-egress verification, and network restoration.
 
 **This is not a jailbreak, a 4K unlock, or a guaranteed latency improvement.** A single Portal running firmware **7.1.7** was tested. Other firmware, network layouts and consoles are unverified. The tool matches a recorded packet layout, not a verified firmware identity; a matching packet length alone does not guarantee compatible plaintext offsets.
 
@@ -12,9 +12,10 @@ Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote P
 | --- | --- | --- |
 | 65 Mbps | approximately 63.106 Mbps | approximately 58 Mbps on Portal; visibly cleaner picture |
 | 100 Mbps | approximately 97.087 Mbps | peaks around 84 Mbps on Portal |
+| 200 Mbps (experimental) | initially 166.141 Mbps, then approximately 158.3 Mbps | qualitative positive feedback; actual sustained throughput not established |
 | Separate 4K experiment | approximately 97.087 Mbps | PS5 offered only 720p/540p/360p; visible regression |
 
-The working bitrate-only profile restored 1080p after the 4K experiment. **The failed 4K profile is not included.** These are observations from one setup, not controlled benchmarks. Target bitrate is not actual video throughput. Sustained 100 Mbps, reduced input lag and universal compatibility have not been demonstrated. Private captures and proprietary firmware are not distributed.
+The working bitrate-only profile restored 1080p after the 4K experiment. **The failed 4K profile is not included.** These are observations from one setup, not controlled benchmarks. Target bitrate is not actual video throughput. Sustained 100 or 200 Mbps, reduced input lag and universal compatibility have not been demonstrated. Private captures and proprietary firmware are not distributed.
 
 ## Requirements
 
@@ -45,7 +46,7 @@ sudo .venv/bin/python portal_capture.py --check
 ## Each new play session
 
 1. Disconnect Portal from PS5; leave PS5 powered on.
-2. Double-click `Start.command`, select 65 or 100, and press Enter. Enter the Mac password only at the local sudo prompt.
+2. Double-click `Start.command`, select 65, 100 or 200, and press Enter. Enter the Mac password only at the local sudo prompt.
 3. Wait for **READY**, then start a fresh connection on Portal.
 4. Look for **Startup packet modified**. The tool restores the direct path after three sufficiently high target reports following acceptance and stream setup, or at the 40-second relay deadline.
 5. Read the final status. Once complete, the Mac is no longer relaying the session. No need to leave the launcher running.
@@ -60,9 +61,17 @@ sudo .venv/bin/python portal_active_probe.py --profile 100
 
 The five-second warm-up is included in the 40-second relay window. Startup preflight and cleanup add time around it. The independent restoration watchdog waits 55 seconds from its own start. Higher bitrate can increase congestion; compare profiles in the same moving scene. To revert, disconnect and reconnect normally without the launcher. Each new session negotiates its own settings.
 
+### 200 Mbps experiment
+
+```sh
+sudo .venv/bin/python portal_active_probe.py --profile 200
+```
+
+The original 200 Mbps run applied one mutation, received BANG acceptance and STREAMINFO, and restored the network without errors. Its PS5 targets settled near 158 Mbps, below the 160 Mbps early-exit threshold. Thus it returned status 1 (`UNCONFIRMED`) despite a working session. This profile retains that threshold: success requires three consecutive reports at or above 160 Mbps, not proof of actual 200 Mbps video. The relay-side one-second UDP peak was 75.760 Mbps; no sustained direct-path throughput or latency improvement was measured. Resolution fields are unchanged. Reconnect with 100 or 65 if playback degrades.
+
 ## How it works
 
-The Mac temporarily relays only the configured PS5–Portal pair. For a narrowly matched initial Takion BIG packet (client version 20, channel zero, zero GMAC, 2296-byte base64 LaunchSpec), it XORs ciphertext bytes at inferred offset 334. The hypothesis is `25000` → `65000`, or the same-length JSON number `1e+05` for 100 Mbps. No plaintext decryption or authentication bypass is claimed. The 1080p resolution fields are not changed.
+The Mac temporarily relays only the configured PS5–Portal pair. For a narrowly matched initial Takion BIG packet (client version 20, channel zero, zero GMAC, 2296-byte base64 LaunchSpec), it XORs ciphertext bytes at inferred offset 334. The hypothesis is `25000` → `65000`, or the same-length JSON number `1e+05` for 100 Mbps, or `2e+05` for 200 Mbps. No plaintext decryption or authentication bypass is claimed. The 1080p resolution fields are not changed.
 
 An independent bounded `tcpdump` capture verifies the changed packet appeared on the Mac interface. BANG acceptance, STREAMINFO and consecutive CONNECTIONQUALITY targets gate early exit. These control messages are observed, not cryptographically authenticated by this tool. Local egress verification does not itself prove delivery. Packet matching does not establish device firmware compatibility.
 
@@ -70,7 +79,7 @@ An independent bounded `tcpdump` capture verifies the changed packet appeared on
 
 - **NOT APPLIED:** no matching new handshake was captured. Disconnect, retry, and connect only after READY. Do not infer that PS5 rejected the target.
 - **UNCONFIRMED:** a mutation occurred but the required high target sequence was not observed. Reconnect normally or try 65. Do not repeatedly force an unknown firmware layout.
-- **Stutter or blurry picture:** compare 65 and 100; higher targets are not always better. Reconnect normally to undo the session change.
+- **Stutter or blurry picture:** compare 65 and 100 before trying 200; higher targets are not always better. Reconnect normally to undo the session change.
 - **Restoration failure:** allow the watchdog its 55 seconds. The report includes `watchdog_state`, the private path to the original network state. Retry restoration with `sudo .venv/bin/python portal_capture.py --restore /path/from/report/state.json`. Use only the state file generated by this tool. If a process was force-killed, reconnect the two devices to refresh neighbor mappings.
 - **Existing lock:** do not run overlapping experiments. If no experiment or watchdog is running and restoration is complete, remove the stale `/var/run/portal-lab-capture.lock` with sudo. Never delete it while another run is active.
 

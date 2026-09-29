@@ -1,9 +1,11 @@
-# PS5 Portal High Bitrate Hack — Türkçe
+# PS5 Portal High Bitrate — Türkçe
 
 Mac üzerinden kendi PS5 ve Portal cihazların için **geçici yüksek bitrate isteği**. Çalışan prototip Portal 7.1.7 üzerinde denendi. Her firmware ve ağda çalışması garanti değil. Public paketleme çevrimdışı test edildi; başka cihazlarda canlı doğrulama bekliyor.
 
 - 65 Mbps hedefinde PS5 yaklaşık 63 Mbps bildirdi; kullanıcı Portal'da 58 Mbps gördü.
 - 100 Mbps hedefinde PS5 yaklaşık 97 Mbps bildirdi; kullanıcı 84 Mbps civarı gördü.
+- 200 Mbps deneyinde PS5 önce 166,141, sonra yaklaşık 158,3 Mbps hedef bildirdi. Gerçek sürekli 200 Mbps doğrulanmadı.
+- 200 profilinde üç kez art arda en az 160 Mbps hedef beklenir. İlk deneme 158 civarında kaldığı için kod 1 verdi; bu, bağlantı başarısız demek değildir.
 - Bunlar sürekli hız veya gecikme garantisi değildir.
 - 4K deneyi 720p'ye düştü. Bu pakette 4K seçeneği yok; çalışan seçenek 1080p yüksek bitrate.
 
@@ -17,14 +19,14 @@ Mac üzerinden kendi PS5 ve Portal cihazların için **geçici yüksek bitrate i
 ## Kullanım
 
 1. Portal'ın PS5 bağlantısını kes; PS5 açık kalsın.
-2. `Start.command` aç, 65 veya 100 seç, Enter'a bas. Parolayı yalnız Mac'in sudo istemine gir.
+2. `Start.command` aç, 65, 100 veya deneysel 200 seç, Enter'a bas. Parolayı yalnız Mac'in sudo istemine gir.
 3. **READY** mesajından sonra Portal'dan bağlan.
 4. `Startup packet modified` ve ardından hedef doğrulamasını bekle.
 5. Program ağ yolunu geri yükleyince Mac aradan çıkar. Aynı oturumda yeniden çalıştırman gerekmez.
 
 Kalıcı cihaz değişikliği yapılmaz. Her yeni oturumda işlem gerekir. Normal ayara dönmek için bağlantıyı kapatıp başlatıcı olmadan yeniden bağlan.
 
-65/100 seçimini aynı hareketli sahnede karşılaştır. Yüksek bitrate daha fazla ağ yükü oluşturabilir; daha düşük gecikme garantisi yok. Mevcut ekran 1080p kalır.
+65/100/200 seçimini aynı hareketli sahnede karşılaştır. Yüksek bitrate daha fazla ağ yükü oluşturabilir; daha düşük gecikme garantisi yok. Mevcut ekran 1080p kalır.
 
 ## Sonuçlar ve hatalar
 

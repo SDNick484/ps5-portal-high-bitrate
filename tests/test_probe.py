@@ -20,7 +20,7 @@ def fixture():
  return packet,plain,stream,packet.index(base64.b64encode(cipher)[:20])
 class MutationTests(unittest.TestCase):
  def test_profiles(self):
-  for delta,expected in [(b'\x04',b'65000'),(bytes.fromhex('03501b0005'),b'1e+05')]:
+  for delta,expected in [(b'\x04',b'65000'),(bytes.fromhex('03501b0005'),b'1e+05'),(bytes.fromhex('00501b0005'),b'2e+05')]:
    data,plain,stream,pos=fixture()
    with patch.object(p,'PATCH_DELTA',delta):
     changed,yes=p.mutate(data)
@@ -44,6 +44,14 @@ class MutationTests(unittest.TestCase):
   other=bytes(Ether(dst=s['own_mac'])/IP(src='192.0.2.99',dst=n.PS5)/UDP()/Raw(data))
   self.assertIsNone(p.transform(other,s,True))
 class ConfirmationTests(unittest.TestCase):
+ def test_200_observed_targets_do_not_pass_threshold(self):
+  with patch.object(p,'CONFIRM_TARGET',160000000):
+   c=p.TargetConfirmation();c.modified();c.observe({'type':'BANG','key_accepted':1,'version_accepted':1});c.observe({'type':'STREAMINFO'})
+   for value in [166141000,158497000,158497000,158522000]:
+    c.observe({'type':'CONNECTIONQUALITY','target_bitrate_raw':value})
+   self.assertFalse(c.ready)
+   for _ in range(3):c.observe({'type':'CONNECTIONQUALITY','target_bitrate_raw':194174000})
+   self.assertTrue(c.ready)
  def test_stale_reports(self):
   c=p.TargetConfirmation()
   for _ in range(4):c.observe({'type':'CONNECTIONQUALITY','target_bitrate_raw':97087000})

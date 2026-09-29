@@ -202,11 +202,11 @@ def run(active, finish_on_high_target=False):
 def main():
     global OFFSET, PATCH_DELTA, CONFIRM_TARGET, PROFILE_LABEL
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--profile',choices=('65','100'),default='65')
+    parser.add_argument('--profile',choices=('65','100','200'),default='65')
     args=parser.parse_args()
     OFFSET=334
-    PATCH_DELTA=b'\x04' if args.profile=='65' else bytes.fromhex('03501b0005')
-    CONFIRM_TARGET=50000000 if args.profile=='65' else 80000000
+    PATCH_DELTA={'65':b'\x04','100':bytes.fromhex('03501b0005'),'200':bytes.fromhex('00501b0005')}[args.profile]
+    CONFIRM_TARGET={'65':50000000,'100':80000000,'200':160000000}[args.profile]
     PROFILE_LABEL=args.profile+'mbps_experimental'
     report=run(True,finish_on_high_target=True)
     if report['restoration_errors']:
@@ -214,7 +214,7 @@ def main():
     if not report['unique_mutated_sequences']:
         print('NOT APPLIED: no matching fresh handshake. Disconnect and retry after READY.');return 1
     if not report['high_target_confirmed']:
-        print('UNCONFIRMED: mutation sent, high target not confirmed.');return 1
+        print(f'UNCONFIRMED: mutation sent, but three consecutive targets >= {CONFIRM_TARGET/1e6:g} Mbps were not observed. This does not mean the session failed.');return 1
     print('Target confirmed. This is not a measurement of actual video bitrate.');return 0
 
 if __name__=='__main__': sys.exit(main())
