@@ -12,3 +12,7 @@ research/
 .env
 *.pem
 *.key
+
+config.windows.json
+windows-baseline.json
+*.zip
