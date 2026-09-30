@@ -111,3 +111,21 @@ class LinuxRouteTests(unittest.TestCase):
     def test_forwarding_enabled_rejected(self):
         with patch.object(n.sys,'platform','linux'),patch.object(n.Path,'read_text',return_value='1'):
             with self.assertRaises(RuntimeError):n.health()
+
+
+class AdapterSelectionTests(unittest.TestCase):
+    def adapters(self):
+        return {1: MagicMock(mac='02:00:00:00:00:01', ip='192.0.2.30', network_name='npcap-one'),
+                2: MagicMock(mac='02:00:00:00:00:02', ip='192.0.2.31', network_name='npcap-two')}
+    def test_menu_number_stores_device_id(self):
+        with patch.object(n.conf, 'ifaces', self.adapters()), patch('builtins.input', return_value='2'), patch('builtins.print'):
+            self.assertEqual(a.choose_windows_interface(), 'npcap-two')
+    def test_pc_ip_and_invalid_numbers_rejected(self):
+        with patch.object(n.conf, 'ifaces', self.adapters()), patch('builtins.print'):
+            for entry in ('192.0.2.30', 'npcap-one', '0', '3'):
+                with patch('builtins.input', return_value=entry), self.assertRaises(ValueError):
+                    a.choose_windows_interface()
+    def test_no_adapter_fails_before_prompt(self):
+        with patch.object(n.conf, 'ifaces', {}), patch('builtins.input') as prompt:
+            with self.assertRaises(RuntimeError): a.choose_windows_interface()
+            prompt.assert_not_called()

@@ -30,6 +30,12 @@ def require_windows():
 def validate_config(c):
     if set(c) != {'interface', 'ps5_ip', 'portal_ip'} or not isinstance(c['interface'], str) or not c['interface'].strip():
         raise ValueError('Config requires interface, ps5_ip and portal_ip.')
+    try:
+        ipaddress.ip_address(c['interface'].strip())
+    except ValueError:
+        pass
+    else:
+        raise ValueError('The LAN interface is an adapter name/ID, not the PC IP address. Run Configure and select your adapter.')
     ips = [ipaddress.IPv4Address(c[k]) for k in ('ps5_ip', 'portal_ip')]
     if ips[0] == ips[1] or any(x.is_multicast or x.is_loopback or x.is_unspecified or x.is_reserved for x in ips):
         raise ValueError('Use two distinct unicast device IPv4 addresses.')

@@ -1,6 +1,6 @@
 # PS5 Portal High Bitrate
 
-**New community preview: Windows + native Linux automation.** [Download v0.3.0-preview.1](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.1). [Automatic setup (EN)](AUTOMATION.md) | [Otomatik kurulum (TR)](AUTOMATION.tr.md). Includes Windows manual launchers and an always-on one-way relay with Windows Task Scheduler / Linux systemd installers. Windows automation validation is pending; Linux/Pi reboot and reconnect success has been reported by a community tester. The owner confirmed the original Mac mini automation prototype; this new portable implementation still needs platform testing. No 4K or guaranteed latency improvement.
+**New community preview: Windows + native Linux automation.** [Download v0.3.0-preview.2](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.2). [Automatic setup (EN)](AUTOMATION.md) | [Otomatik kurulum (TR)](AUTOMATION.tr.md). Includes Windows manual launchers and an always-on one-way relay with Windows Task Scheduler / Linux systemd installers. Windows automation validation is pending; Linux/Pi reboot and reconnect success has been reported by a community tester. The owner confirmed the original Mac mini automation prototype; this new portable implementation still needs platform testing. No 4K or guaranteed latency improvement.
 
 The following sections describe the **macOS manual launcher**. For Windows manual mode use [WINDOWS.md](WINDOWS.md); for Linux or automatic mode use the guides above.
 

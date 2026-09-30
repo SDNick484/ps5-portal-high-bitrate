@@ -267,6 +267,22 @@ def run(c, runtime, active=True, seconds=None):
     return dict(counts)
 
 
+def choose_windows_interface():
+    adapters = [x for x in net.conf.ifaces.values() if x.mac and x.ip and x.ip != '0.0.0.0']
+    if not adapters:
+        raise RuntimeError('No addressed LAN adapters found. Check Npcap and your LAN connection.')
+    print('Select the adapter connected to your PS5/Portal LAN. Use its menu number.')
+    for index, adapter in enumerate(adapters, 1):
+        print(f'{index}: {adapter.name} ({adapter.description}) - {adapter.ip}')
+    try:
+        number = int(input('LAN adapter number: ').strip())
+    except ValueError:
+        raise ValueError('Enter the adapter menu number, not a PC IP address or GUID.') from None
+    if not 1 <= number <= len(adapters):
+        raise ValueError('Adapter number is outside the displayed list.')
+    return adapters[number - 1].network_name
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('command', choices=['configure', 'baseline', 'run', 'stop', 'status', 'repair', 'guardian', 'verify-baseline'])
@@ -298,10 +314,11 @@ def main():
         return guardian(runtime, args.parent)
     if args.command == 'configure':
         if sys.platform == 'win32':
-            net.conf.ifaces.show()
+            interface = choose_windows_interface()
         else:
             print('Interfaces:', ', '.join(str(x) for x in net.conf.ifaces.values()))
-        c = {'network': {'interface': input('LAN interface name/GUID: ').strip(),
+            interface = input('LAN interface name (for example eth0 or en0, not a PC IP): ').strip()
+        c = {'network': {'interface': interface,
                         'ps5_ip': input('PS5 IPv4: ').strip(), 'portal_ip': input('Portal IPv4: ').strip()},
              'profile': args.profile}
         state = net.state_for(c, enroll=True)

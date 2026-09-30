@@ -28,6 +28,11 @@ class WindowsTests(unittest.TestCase):
         self.assertEqual(n.normal_mac('02:AA:00:00:00:01'), '02:aa:00:00:00:01')
         with self.assertRaises(ValueError): n.normal_mac('ff:ff:ff:ff:ff:ff')
 
+    def test_pc_ip_cannot_be_used_as_adapter(self):
+        for address in ('192.0.2.30', '2001:db8::30'):
+            with self.assertRaisesRegex(ValueError, 'not the PC IP'):
+                n.validate_config({'interface': address, 'ps5_ip': '192.0.2.10', 'portal_ip': '192.0.2.20'})
+
     def test_forwarding_check_is_readonly_and_fails_closed(self):
         with patch.object(n.subprocess, 'run') as run:
             run.return_value.stdout = '{"InterfaceIndex":12,"Forwarding":0}'
