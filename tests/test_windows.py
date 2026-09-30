@@ -39,8 +39,13 @@ class WindowsTests(unittest.TestCase):
             with self.assertRaises(RuntimeError): n.forwarding_disabled(12)
 
     def test_injection_failure_detected(self):
-        sock=MagicMock();sock.pcap_fd.send.return_value=-1
-        with self.assertRaises(RuntimeError):n.send_raw(sock,b'abc')
+        sock=MagicMock()
+        for result in (-1, 1):
+            sock.pcap_fd.send.return_value=result
+            with self.assertRaises(RuntimeError):n.send_raw(sock,b'abc')
+        for result in (0, 3):
+            sock.pcap_fd.send.return_value=result
+            n.send_raw(sock,b'abc')
 
     def test_restore_uses_original_peer_mac(self):
         state={'config':{},'own_mac':'02:00:00:00:00:01','ps5_mac':'02:00:00:00:00:02','portal_mac':'02:00:00:00:00:03'}
@@ -50,6 +55,12 @@ class WindowsTests(unittest.TestCase):
             self.assertEqual(len(sent),10)
             self.assertEqual(sent[0][n.ARP].hwsrc,state['portal_mac'])
             op.return_value.close.assert_called_once()
+
+    def test_restore_close_failure_is_reported(self):
+        state={'config':{}}
+        with patch.object(n,'configure'),patch.object(n,'open_socket') as op,patch.object(n,'frames',return_value=[]),patch.object(n.time,'sleep'):
+            op.return_value.close.side_effect=OSError('close failure')
+            self.assertEqual(n.restore(state),['Adapter close: OSError'])
 
     def test_baseline_requires_acceptance_and_both_directions(self):
         report={'completed':True,'restoration_errors':[],'counts':{'forwarded_in':2,'forwarded_out':2},'ps5_messages':[{'type':'BANG','key_accepted':1,'version_accepted':1},{'type':'STREAMINFO'}]}

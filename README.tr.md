@@ -9,7 +9,7 @@ Mac üzerinden kendi PS5 ve Portal cihazların için **geçici yüksek bitrate i
 - Bunlar sürekli hız veya gecikme garantisi değildir.
 - 4K deneyi 720p'ye düştü. Bu pakette 4K seçeneği yok; çalışan seçenek 1080p yüksek bitrate.
 
-**Yerel Windows önizlemesi:** [Windows 11 test adımları](WINDOWS.tr.md). Henüz gerçek Windows cihazında doğrulanmadı ve GitHub release olarak yayımlanmadı.
+**Windows topluluk test önizlemesi:** [Windows 11 test adımları](WINDOWS.tr.md). Gerçek Windows cihazında doğrulanmadı. Yalnız topluluk testi için ön sürümdür.
 
 ## Kurulum
 

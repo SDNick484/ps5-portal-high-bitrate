@@ -1,4 +1,4 @@
-"""Unreleased Windows preview. Never runs network changes on import."""
+"""Experimental Windows community preview. Never runs network changes on import."""
 import argparse
 import collections
 import datetime
@@ -108,8 +108,6 @@ def run(profile, baseline=False):
         if previous.get('config') != state['config'] or not previous.get('baseline_ok'):
             raise RuntimeError('Run Check-Windows.cmd and Baseline-Windows.cmd successfully before changing bitrate.')
     lock = net.MachineLock()
-    if baseline:
-        (net.ROOT / 'windows-baseline.json').unlink(missing_ok=True)
     rx = witness = watcher = log = None
     altered = completed = False
     errors, events, seen = [], [], set()
@@ -119,6 +117,8 @@ def run(profile, baseline=False):
     folder = net.ROOT / 'experiments' / ('windows-' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S-%f'))
     old_signal = signal.getsignal(signal.SIGINT)
     try:
+        if baseline:
+            (net.ROOT / 'windows-baseline.json').unlink(missing_ok=True)
         folder.mkdir(parents=True)
         saved = folder / 'recovery-state.json'
         saved.write_text(json.dumps(state))
@@ -189,7 +189,10 @@ def run(profile, baseline=False):
     finally:
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         if altered:
-            errors = net.restore(state)
+            try:
+                errors = net.restore(state)
+            except Exception as exc:
+                errors = ['Unexpected restore failure: ' + type(exc).__name__]
         if witness:
             try:
                 witness.drain()

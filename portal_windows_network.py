@@ -114,12 +114,13 @@ def open_socket(filter=None):
 def send_raw(sock, frame):
     # pcap_inject / pcap_sendpacket return negative on failure. Do not ignore it.
     sent = sock.pcap_fd.send(bytes(frame))
-    if sent < 0:
+    if sent not in (0, len(bytes(frame))):
         raise RuntimeError('Npcap packet injection failed.')
 
 
 def restore(state):
     sock = None
+    errors = []
     try:
         configure(state['config'])
         sock = open_socket()
@@ -127,12 +128,15 @@ def restore(state):
             for frame in frames(state, True):
                 send_raw(sock, frame)
             time.sleep(.1)
-        return []
     except Exception as exc:
-        return [f'{type(exc).__name__}: {exc}']
+        errors.append(f'{type(exc).__name__}: {exc}')
     finally:
         if sock is not None:
-            sock.close()
+            try:
+                sock.close()
+            except Exception as exc:
+                errors.append('Adapter close: ' + type(exc).__name__)
+    return errors
 
 
 class MachineLock:

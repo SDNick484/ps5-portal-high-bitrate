@@ -6,7 +6,7 @@ Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote P
 
 [Türkçe kullanım](README.tr.md)
 
-**Local Windows preview:** see [Windows test guide](WINDOWS.md). This branch is unpublished and awaits physical Windows validation.
+**Windows community test preview:** see [Windows test guide](WINDOWS.md). This is a prerelease awaiting physical Windows validation; not a stable Windows release.
 
 ## Observed results
 
