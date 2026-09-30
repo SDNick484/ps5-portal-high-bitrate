@@ -1,6 +1,6 @@
 # PS5 Portal High Bitrate - Türkçe
 
-**Yeni deneysel sürüm: Windows + Linux otomasyon.** [v0.3.0-preview.1 indir](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.1) | [Adım adım otomatik kurulum](AUTOMATION.tr.md). Windows/Linux fiziksel cihaz doğrulaması bekliyor. Mac mini prototipi kullanıcı tarafından doğrulandı; yeni ortak uygulama ayrıca platform testi gerektiriyor. Aşağıdaki eski kurulum adımları macOS elle başlatıcı içindir.
+**Yeni deneysel sürüm: Windows + Linux otomasyon.** [v0.3.0-preview.1 indir](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.1) | [Adım adım otomatik kurulum](AUTOMATION.tr.md). Windows otomasyonu fiziksel doğrulama bekliyor; Linux/Pi yeniden başlatma ve yeni bağlantı için kullanıcı başarı raporu geldi. Mac mini prototipi kullanıcı tarafından doğrulandı; yeni ortak uygulama ayrıca platform testi gerektiriyor. Aşağıdaki eski kurulum adımları macOS elle başlatıcı içindir.
 
 Mac üzerinden kendi PS5 ve Portal cihazların için **geçici yüksek bitrate isteği**. Çalışan prototip Portal 7.1.7 üzerinde denendi. Her firmware ve ağda çalışması garanti değil. Public paketleme çevrimdışı test edildi; başka cihazlarda canlı doğrulama bekliyor.
 
@@ -39,3 +39,6 @@ Kalıcı cihaz değişikliği yapılmaz. Her yeni oturumda işlem gerekir. Norma
 Aktarma en fazla 40 saniye; başlangıç ve temizleme ek süre alabilir. Ayrı kurtarma süreci 55 saniye sonra özgün ağ ayarlarını geri yüklemeyi dener. Mac kapanırsa kurtarma çalışamaz.
 
 Özel IP'ler, raporlar ve ham paket kayıtları yerel kalır. Ham kayıtları GitHub'a yükleme. Bu araç jailbreak değildir; Sony ile bağlantısı yoktur.
+
+
+Linux kullanıcı raporu: [tissee](https://www.reddit.com/r/PlaystationPortal/comments/1wtyglf/comment/pd2k5ls/), EndeavourOS ve Ethernet bağlı Raspberry Pi OS / Pi 3B üzerinde başarı bildirdi. Pi yeniden başlatma, yeni Portal bağlantısı ve PS5 dinlenme modundan açılırken 100 Mbps profili de çalışmış. Docker/IPv4 forwarding notu ve kalan testler [otomasyon kılavuzunda](AUTOMATION.tr.md). Bu rapor gerçek sürekli bitrate veya giriş gecikmesi ölçümü değildir.

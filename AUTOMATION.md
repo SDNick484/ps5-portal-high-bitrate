@@ -1,6 +1,6 @@
 # Automatic relay preview: Windows, Linux and macOS
 
-The owner confirmed an always-on Mac mini prototype with a real PS5/Portal. This release ports that one-way design to a common engine. **The new Windows/Linux runtime, installers, startup tasks and crash recovery have not been validated on physical Windows/Linux hosts.** The common engine's macOS service packaging is not included; the existing macOS manual launcher remains available. This is a community testing prerelease, not guaranteed support.
+The owner confirmed an always-on Mac mini prototype with a real PS5/Portal. This release ports that one-way design to a common engine. **Windows automation still awaits physical validation. A community tester has now reported Linux/Pi installation, reboot and reconnect success; crash recovery and broader compatibility remain unverified.** The common engine's macOS service packaging is not included; the existing macOS manual launcher remains available. This is a community testing prerelease, not guaranteed support.
 
 ## What changes
 
@@ -28,7 +28,7 @@ If installation rejects the Python path, reinstall Python for all users and recr
 
 ## Native Linux preview
 
-Initial target: Debian/Ubuntu-style native Linux with Ethernet, Python 3.10+, iproute2, libpcap and systemd. Other distributions require equivalent packages. Raspberry Pi ARM64 is an **untested candidate**, not a certified target. WSL, Docker/VM networking, Android and router firmware are not supported deployment targets.
+Initial target: Debian/Ubuntu-style native Linux with Ethernet, Python 3.10+, iproute2, libpcap and systemd. Other distributions require equivalent packages. A Raspberry Pi 3B running Raspberry Pi OS has a community success report below; its OS architecture/version was not supplied, so ARM64 compatibility is not established. WSL, Docker/VM networking, Android and router firmware are not supported deployment targets.
 
 ```sh
 sudo apt update
@@ -55,6 +55,12 @@ sudo journalctl -u portal-bitrate-auto -n 50 --no-pager
 ```
 
 Stop persists across reboot until Start. Uninstall disables/removes the unit, retaining private code/config/logs for your review. Upgrades intentionally refuse to overwrite an installation: stop/uninstall, back up private data, remove the old installation directories and repeat setup/baseline with the new release.
+
+## Community Linux report (2026-09-30)
+
+[Tester tissee reports](https://www.reddit.com/r/PlaystationPortal/comments/1wtyglf/comment/pd2k5ls/) successful use on an EndeavourOS notebook and on a Raspberry Pi 3B running Raspberry Pi OS over Ethernet. On the Pi, the tester confirmed systemd startup after reboot, a fresh Portal reconnect and the 100 Mbps profile working when PS5 wakes from rest mode. Exact distro releases, OS architecture, sustained video throughput and input latency were not supplied. This is a community report, not a maintainer-run benchmark or a universal compatibility guarantee. Crash recovery and long-duration stability still need validation.
+
+The tester had to resolve IPv4 forwarding being enabled/reapplied by Docker. Our relay refuses to start with forwarding enabled and does not change that setting. [Docker documents](https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-on-a-router) that its usual iptables backend can enable forwarding at startup; Docker bridge networking requires forwarding. Disabling it on a shared Docker host can disrupt container networking. Use a dedicated relay host when those requirements conflict; do not blindly disable forwarding or remove the relay check. This report covers native Linux, not running this relay inside Docker.
 
 ## Recovery and limitations
 

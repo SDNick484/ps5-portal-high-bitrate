@@ -1,6 +1,6 @@
 # Windows / Linux otomasyon önizlemesi
 
-Mac mini'deki ilk sürekli çalışan sürüm gerçek PS5/Portal ile kullanıcı tarafından doğrulandı. Bu pakette aynı tek yönlü yaklaşım ortak bir motora taşındı. **Yeni Windows/Linux motoru, kurucuları, açılış servisleri ve çökme sonrası kurtarması bu platformlarda fiziksel cihazlarla henüz doğrulanmadı.** Deneysel test sürümüdür. Ortak motorun macOS servis kurucusu bu pakette yok; mevcut macOS elle başlatıcı kullanılabilir.
+Mac mini'deki ilk sürekli çalışan sürüm gerçek PS5/Portal ile kullanıcı tarafından doğrulandı. Bu pakette aynı tek yönlü yaklaşım ortak bir motora taşındı. **Windows otomasyonu fiziksel doğrulama bekliyor. Linux/Pi için kullanıcıdan kurulum, yeniden başlatma ve yeni bağlantı başarı bildirimi geldi; çökme sonrası kurtarma ve geniş uyumluluk henüz doğrulanmadı.** Deneysel test sürümüdür. Ortak motorun macOS servis kurucusu bu pakette yok; mevcut macOS elle başlatıcı kullanılabilir.
 
 Bilgisayar açık, uyanık ve PS5/Portal ile aynı doğrudan yerel ağda kalmalı. Bilgisayarı mümkünse Ethernet ile bağla. Router'da cihazların IP adreslerini sabitle. USB gerekmiyor. Yalnız Portal'dan PS5'e giden kontrol trafiği bilgisayardan geçer; görüntü PS5'ten Portal'a doğrudan gider. Kontrol yoluna ek bir adım eklenir; gecikme ölçülmedi. 4K, upscale veya sürekli 200 Mbps garantisi yok.
 
@@ -20,7 +20,7 @@ Menüde `Start`, `Stop`, `Status`, `Uninstall` bulunur. Stop kalıcı durdurma i
 
 ## Linux
 
-İlk hedef: fiziksel Debian/Ubuntu benzeri sistem, Ethernet, Python 3.10+, iproute2, libpcap, systemd. Raspberry Pi ARM64 henüz test edilmedi. WSL, Docker/VM ağı veya modem firmware'i desteklenen kurulum hedefi değil.
+İlk hedef: fiziksel Debian/Ubuntu benzeri sistem, Ethernet, Python 3.10+, iproute2, libpcap, systemd. Raspberry Pi OS kullanan Pi 3B için aşağıdaki kullanıcı başarı bildirimi var; işletim sistemi mimarisi/sürümü belirtilmediği için ARM64 uyumluluğu kanıtlanmış değil. WSL, Docker/VM ağı veya modem firmware'i desteklenen kurulum hedefi değil.
 
 ```sh
 sudo apt update
@@ -45,6 +45,12 @@ sh Auto-Linux.sh uninstall
 ```
 
 Stop yeniden başlatmadan sonra da geçerli. Uninstall servisi kaldırır, özel dosyaları bırakır. Güncelleme/profil değişikliği için önce stop/uninstall, özel dosyaları yedekleyip eski kurulum klasörlerini kaldırma, yeni configure/baseline/install gerekir. Kurucu mevcut kurulumu bilerek ezmez.
+
+## Linux kullanıcı test raporu (30 Eylül 2026)
+
+[Tissee'nin raporu](https://www.reddit.com/r/PlaystationPortal/comments/1wtyglf/comment/pd2k5ls/): EndeavourOS dizüstü bilgisayar ve Ethernet bağlantılı Raspberry Pi OS / Pi 3B üzerinde başarı. Pi yeniden başlatılınca systemd servisi açılıyor, Portal yeni bağlantı kurabiliyor ve PS5 dinlenme modundan açıldığında da 100 Mbps profili çalışıyor. Tam dağıtım sürümü, mimari, sürekli gerçek video hızı ve giriş gecikmesi verilmedi. Bu kullanıcı bildirimi; bakımcı tarafından yapılmış benchmark veya genel uyumluluk garantisi değil. Çökme kurtarması ve uzun süreli kullanım hâlâ test bekliyor.
+
+Kullanıcı, Docker'ın açtığı/yeniden uyguladığı IPv4 forwarding ayarını çözmek zorunda kaldı. Röle forwarding açıkken başlamayı reddeder ve bu ayarı değiştirmez. [Docker belgelerine](https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-on-a-router) göre olağan iptables arka ucunda açılışta forwarding etkinleştirilebilir; bridge ağı forwarding gerektirir. Ortak Docker makinesinde bunu kapatmak container ağını bozabilir. Gereksinimler çakışıyorsa ayrı bir röle makinesi kullan; ayarı körlemesine kapatma veya kontrolü kaldırma. Bu rapor fiziksel Linux kurulumu içindir, Docker içinde röle çalıştırma doğrulaması değildir.
 
 ## Arıza ve gizlilik
 

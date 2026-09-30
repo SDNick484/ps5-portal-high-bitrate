@@ -1,6 +1,6 @@
 # PS5 Portal High Bitrate
 
-**New community preview: Windows + native Linux automation.** [Download v0.3.0-preview.1](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.1). [Automatic setup (EN)](AUTOMATION.md) | [Otomatik kurulum (TR)](AUTOMATION.tr.md). Includes Windows manual launchers and an always-on one-way relay with Windows Task Scheduler / Linux systemd installers. Physical Windows/Linux validation is pending. The owner confirmed the original Mac mini automation prototype; this new portable implementation still needs platform testing. No 4K or guaranteed latency improvement.
+**New community preview: Windows + native Linux automation.** [Download v0.3.0-preview.1](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.1). [Automatic setup (EN)](AUTOMATION.md) | [Otomatik kurulum (TR)](AUTOMATION.tr.md). Includes Windows manual launchers and an always-on one-way relay with Windows Task Scheduler / Linux systemd installers. Windows automation validation is pending; Linux/Pi reboot and reconnect success has been reported by a community tester. The owner confirmed the original Mac mini automation prototype; this new portable implementation still needs platform testing. No 4K or guaranteed latency improvement.
 
 The following sections describe the **macOS manual launcher**. For Windows manual mode use [WINDOWS.md](WINDOWS.md); for Linux or automatic mode use the guides above.
 
@@ -22,6 +22,8 @@ Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote P
 The working bitrate-only profile restored 1080p after the 4K experiment. **The failed 4K profile is not included.** These are observations from one setup, not controlled benchmarks. Target bitrate is not actual video throughput. Sustained 100 or 200 Mbps, reduced input lag and universal compatibility have not been demonstrated. Private captures and proprietary firmware are not distributed.
 
 A community member [reported a successful 65 Mbps session on the earlier Windows manual preview](https://www.reddit.com/r/PlaystationPortal/comments/1wtyglf/comment/pd0nzk0/). This is a user report, not independent validation of the new automatic mode or general Windows compatibility.
+
+A [Linux tester](https://www.reddit.com/r/PlaystationPortal/comments/1wtyglf/comment/pd2k5ls/) reports success on EndeavourOS and Raspberry Pi OS / Pi 3B over Ethernet, including systemd startup after reboot, a fresh Portal reconnect and the 100 Mbps profile with PS5 waking from rest mode. See [automation notes](AUTOMATION.md#community-linux-report-2026-09-30) for the Docker/forwarding conflict and remaining test gaps. This is community feedback, not a throughput or latency benchmark.
 
 ## Requirements
 
