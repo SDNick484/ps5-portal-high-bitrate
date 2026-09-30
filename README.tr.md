@@ -1,5 +1,7 @@
 # PS5 Portal High Bitrate — Türkçe
 
+**Windows için test gönüllüsü arıyoruz:** [Windows ön sürümünü indir](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.2.0-windows-preview.1). Adım adım Türkçe/İngilizce kurulum dahil. Gerçek Windows cihazında henüz doğrulanmadı; kesin çalışma garantisi yok. Aşağıdaki main sürümü macOS içindir.
+
 Mac üzerinden kendi PS5 ve Portal cihazların için **geçici yüksek bitrate isteği**. Çalışan prototip Portal 7.1.7 üzerinde denendi. Her firmware ve ağda çalışması garanti değil. Public paketleme çevrimdışı test edildi; başka cihazlarda canlı doğrulama bekliyor.
 
 - 65 Mbps hedefinde PS5 yaklaşık 63 Mbps bildirdi; kullanıcı Portal'da 58 Mbps gördü.

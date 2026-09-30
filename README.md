@@ -1,5 +1,7 @@
 # PS5 Portal High Bitrate
 
+**Windows testers wanted:** [Download the Windows Community Preview](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.2.0-windows-preview.1). Includes step-by-step English/Turkish instructions. Physical Windows validation is pending; this is a prerelease, not guaranteed Windows support. The main branch below remains the macOS version.
+
 Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote Play bitrate on your own PlayStation Portal. Includes 65, 100 and experimental 200 Mbps target profiles, a bounded relay, independent packet-egress verification, and network restoration.
 
 **This is not a jailbreak, a 4K unlock, or a guaranteed latency improvement.** A single Portal running firmware **7.1.7** was tested. Other firmware, network layouts and consoles are unverified. The tool matches a recorded packet layout, not a verified firmware identity; a matching packet length alone does not guarantee compatible plaintext offsets.
