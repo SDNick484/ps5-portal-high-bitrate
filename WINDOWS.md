@@ -1,4 +1,4 @@
-# Windows community preview — physical-device validation pending
+# Windows community preview - physical-device validation pending
 
 For the new always-on preview, use [AUTOMATION.md](AUTOMATION.md). This guide covers bounded manual sessions only.
 
@@ -31,14 +31,14 @@ Do not publish configuration, recovery state or baseline receipts; they contain 
 6. Right-click **Configure-Windows.cmd** → **Run as administrator**. Accept the Windows UAC prompt. Choose the physical LAN adapter, not VPN/loopback. Enter the current device addresses from the PS5/Portal network screens or router app. This writes only local configuration; do not upload it.
 7. Right-click **Check-Windows.cmd** → **Run as administrator**. Continue only on `CHECK PASSED`. If it reports Npcap, route, forwarding or peer-resolution errors, stop and report the redacted error. Do not disable your firewall to try to force it through.
 8. Disconnect the Portal session, leave PS5 on, then right-click **Baseline-Windows.cmd** → **Run as administrator**. Press Enter. Start a new Portal session **only after READY**. Wait for `Baseline passed` and confirm normal picture/control after restoration. If it fails, do not advance to bitrate modification.
-9. Disconnect again and run **Start-Windows.cmd** as administrator. Select **65**, press Enter, wait for READY, then connect. After a successful result, observe a moving scene for 30–60 seconds. Test **100** and **200** in separate fresh sessions only if earlier profiles work well.
+9. Disconnect again and run **Start-Windows.cmd** as administrator. Select **65**, press Enter, wait for READY, then connect. After a successful result, observe a moving scene for 30-60 seconds. Test **100** and **200** in separate fresh sessions only if earlier profiles work well.
 10. Open an issue using **Windows preview test result**. Report successes as well as failures. This is how we establish whether the Windows implementation actually works across adapters.
 
 ## What has and has not been validated
 
 The synthetic tests and extracted ZIP were tested on macOS. They cover exact ciphertext deltas, packet length/checksum, confirmation gating, configuration validation and mocked recovery paths. Native Windows execution, Npcap injection on physical adapters, actual PS5 acceptance and Portal playback on Windows remain unverified. GitHub-hosted tests may also be blocked by the maintainer's account runner availability; check the actual run rather than assuming a green CI result.
 
-Test on your own devices. Driver incompatibility or interrupted cleanup can temporarily disrupt their connection. The bounded relay and watchdog reduce that risk but are not a guarantee. Report any recovery issue before repeating a run. The named 200 Mbps profile is an experimental request; on the Mac prototype it produced roughly 158–166 Mbps console targets, not verified sustained 200 Mbps traffic.
+Test on your own devices. Driver incompatibility or interrupted cleanup can temporarily disrupt their connection. The bounded relay and watchdog reduce that risk but are not a guarantee. Report any recovery issue before repeating a run. The named 200 Mbps profile is an experimental request; on the Mac prototype it produced roughly 158-166 Mbps console targets, not verified sustained 200 Mbps traffic.
 
 - `0`: the selected stage met its software criteria; still check actual picture/control.
 - `1`: stage not confirmed; for 200, the target may settle below the 160 Mbps confirmation threshold despite a working session.

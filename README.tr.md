@@ -1,4 +1,4 @@
-# PS5 Portal High Bitrate — Türkçe
+# PS5 Portal High Bitrate - Türkçe
 
 **Yeni deneysel sürüm: Windows + Linux otomasyon.** [v0.3.0-preview.1 indir](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.1) | [Adım adım otomatik kurulum](AUTOMATION.tr.md). Windows/Linux fiziksel cihaz doğrulaması bekliyor. Mac mini prototipi kullanıcı tarafından doğrulandı; yeni ortak uygulama ayrıca platform testi gerektiriyor. Aşağıdaki eski kurulum adımları macOS elle başlatıcı içindir.
 

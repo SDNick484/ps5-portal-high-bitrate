@@ -1,4 +1,4 @@
-# Windows 10/11 — topluluk test ön sürümü
+# Windows 10/11 - topluluk test ön sürümü
 
 Yeni sürekli otomasyon için [AUTOMATION.tr.md](AUTOMATION.tr.md). Bu kılavuz yalnız süreli elle başlatılan oturumları anlatır.
 

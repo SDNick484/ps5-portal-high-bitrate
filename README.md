@@ -77,7 +77,7 @@ The original 200 Mbps run applied one mutation, received BANG acceptance and STR
 
 ## How it works
 
-The Mac temporarily relays only the configured PS5–Portal pair. For a narrowly matched initial Takion BIG packet (client version 20, channel zero, zero GMAC, 2296-byte base64 LaunchSpec), it XORs ciphertext bytes at inferred offset 334. The hypothesis is `25000` → `65000`, or the same-length JSON number `1e+05` for 100 Mbps, or `2e+05` for 200 Mbps. No plaintext decryption or authentication bypass is claimed. The 1080p resolution fields are not changed.
+The Mac temporarily relays only the configured PS5-Portal pair. For a narrowly matched initial Takion BIG packet (client version 20, channel zero, zero GMAC, 2296-byte base64 LaunchSpec), it XORs ciphertext bytes at inferred offset 334. The hypothesis is `25000` → `65000`, or the same-length JSON number `1e+05` for 100 Mbps, or `2e+05` for 200 Mbps. No plaintext decryption or authentication bypass is claimed. The 1080p resolution fields are not changed.
 
 An independent bounded `tcpdump` capture verifies the changed packet appeared on the Mac interface. BANG acceptance, STREAMINFO and consecutive CONNECTIONQUALITY targets gate early exit. These control messages are observed, not cryptographically authenticated by this tool. Local egress verification does not itself prove delivery. Packet matching does not establish device firmware compatibility.
 
