@@ -12,3 +12,18 @@ research/
 .env
 *.pem
 *.key
+
+# Local enrollment, credentials and runtime reports
+.env.*
+!.env.example
+config.windows.json
+auto-config.json
+*-baseline.json
+runtime/
+auto-runtime/
+*.pfx
+*.p12
+id_rsa*
+id_ed25519*
+*.mobileprovision
+release-assets/

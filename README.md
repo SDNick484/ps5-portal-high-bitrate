@@ -1,6 +1,8 @@
 # PS5 Portal High Bitrate
 
-**Windows testers wanted:** [Download the Windows Community Preview](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.2.0-windows-preview.1). Includes step-by-step English/Turkish instructions. Physical Windows validation is pending; this is a prerelease, not guaranteed Windows support. The main branch below remains the macOS version.
+**New community preview: Windows + native Linux automation.** [Download v0.3.0-preview.1](https://github.com/atameric/ps5-portal-high-bitrate/releases/tag/v0.3.0-preview.1). [Automatic setup (EN)](AUTOMATION.md) | [Otomatik kurulum (TR)](AUTOMATION.tr.md). Includes Windows manual launchers and an always-on one-way relay with Windows Task Scheduler / Linux systemd installers. Physical Windows/Linux validation is pending. The owner confirmed the original Mac mini automation prototype; this new portable implementation still needs platform testing. No 4K or guaranteed latency improvement.
+
+The following sections describe the **macOS manual launcher**. For Windows manual mode use [WINDOWS.md](WINDOWS.md); for Linux or automatic mode use the guides above.
 
 Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote Play bitrate on your own PlayStation Portal. Includes 65, 100 and experimental 200 Mbps target profiles, a bounded relay, independent packet-egress verification, and network restoration.
 
@@ -18,6 +20,8 @@ Experimental **macOS** launcher for temporarily requesting a higher PS5 Remote P
 | Separate 4K experiment | approximately 97.087 Mbps | PS5 offered only 720p/540p/360p; visible regression |
 
 The working bitrate-only profile restored 1080p after the 4K experiment. **The failed 4K profile is not included.** These are observations from one setup, not controlled benchmarks. Target bitrate is not actual video throughput. Sustained 100 or 200 Mbps, reduced input lag and universal compatibility have not been demonstrated. Private captures and proprietary firmware are not distributed.
+
+A community member [reported a successful 65 Mbps session on the earlier Windows manual preview](https://www.reddit.com/r/PlaystationPortal/comments/1wtyglf/comment/pd0nzk0/). This is a user report, not independent validation of the new automatic mode or general Windows compatibility.
 
 ## Requirements
 

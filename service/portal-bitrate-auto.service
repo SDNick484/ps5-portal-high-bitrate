@@ -1,0 +1,19 @@
+[Unit]
+Description=Experimental PlayStation Portal one-way bitrate relay
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/portal-bitrate-auto
+ExecStart=/opt/portal-bitrate-auto/.venv/bin/python -u /opt/portal-bitrate-auto/portal_auto.py run --runtime /var/lib/portal-bitrate-auto
+Restart=on-failure
+RestartSec=30
+# SIGTERM reaches the relay first; guardian repairs before the final group kill.
+KillMode=mixed
+TimeoutStopSec=45
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

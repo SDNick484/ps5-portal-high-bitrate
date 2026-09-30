@@ -1,0 +1,166 @@
+"""Windows/Npcap adapter for a single explicitly configured local device pair."""
+import ctypes
+import ipaddress
+import json
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+from scapy.all import ARP, Ether, conf, srp
+from scapy.interfaces import resolve_iface
+
+ROOT = Path(__file__).resolve().parent
+PS5 = '192.0.2.10'
+PORTAL = '192.0.2.20'
+IFACE = None
+MUTEX_NAME = 'Global\\PS5PortalBitrateLabPreview'
+
+
+def require_windows():
+    if sys.platform != 'win32':
+        raise RuntimeError('Run this launcher on native Windows 10/11, not WSL.')
+    if not ctypes.windll.shell32.IsUserAnAdmin():
+        raise RuntimeError('Open Windows Terminal as administrator, then retry.')
+    conf.use_pcap = True
+    if not conf.use_npcap:
+        raise RuntimeError('Npcap is required. Install it from https://npcap.com/#download and restart this terminal.')
+
+
+def validate_config(c):
+    if set(c) != {'interface', 'ps5_ip', 'portal_ip'} or not isinstance(c['interface'], str) or not c['interface'].strip():
+        raise ValueError('Config requires interface, ps5_ip and portal_ip.')
+    ips = [ipaddress.IPv4Address(c[k]) for k in ('ps5_ip', 'portal_ip')]
+    if ips[0] == ips[1] or any(x.is_multicast or x.is_loopback or x.is_unspecified or x.is_reserved for x in ips):
+        raise ValueError('Use two distinct unicast device IPv4 addresses.')
+    return c
+
+
+def configure(c=None):
+    global IFACE, PS5, PORTAL
+    c = validate_config(c if c is not None else json.loads((ROOT / 'config.windows.json').read_text(encoding='utf-8-sig')))
+    IFACE = resolve_iface(c['interface'])
+    PS5, PORTAL = c['ps5_ip'], c['portal_ip']
+    return c
+
+
+def normal_mac(value):
+    if not re.fullmatch(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}', value or ''):
+        raise ValueError('Invalid Ethernet MAC address.')
+    if int(value[:2], 16) & 1 or value == '00:00:00:00:00:00':
+        raise ValueError('Expected unicast Ethernet MAC address.')
+    return value.lower()
+
+
+def forwarding_disabled(index):
+    # Query only: do not disable sharing, firewalls, routing or registry settings.
+    script = ("$ErrorActionPreference='Stop'; Get-NetIPInterface -AddressFamily IPv4 "
+              f"-InterfaceIndex {int(index)} | Select-Object InterfaceIndex,Forwarding | ConvertTo-Json -Compress")
+    result = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', script],
+                            capture_output=True, text=True, check=True, timeout=15)
+    data = json.loads(result.stdout.lstrip('\ufeff'))
+    rows = data if isinstance(data, list) else [data]
+    if not rows or any(int(x['InterfaceIndex']) != int(index) or x['Forwarding'] not in (0, 'Disabled') for x in rows):
+        raise RuntimeError('Selected adapter has forwarding enabled or unknown state. No changes made.')
+
+
+def peer_mac(ip):
+    answers, _ = srp(Ether(src=IFACE.mac, dst='ff:ff:ff:ff:ff:ff') / ARP(pdst=ip),
+                     iface=IFACE, timeout=2, retry=1, verbose=False)
+    found = {normal_mac(r[ARP].hwsrc) for _, r in answers
+             if ARP in r and r[ARP].op == 2 and r[ARP].psrc == ip}
+    if len(found) != 1:
+        raise RuntimeError(f'{ip}: could not resolve exactly one peer. Check IP, Wi-Fi isolation and power.')
+    return found.pop()
+
+
+def preflight(c):
+    conf.route.resync()
+    for ip in (PS5, PORTAL):
+        iface, source, gateway = conf.route.route(ip)
+        if resolve_iface(iface).network_name != IFACE.network_name or gateway != '0.0.0.0':
+            raise RuntimeError('Both peers must route directly through the selected LAN adapter.')
+        if source in (PS5, PORTAL, '0.0.0.0'):
+            raise RuntimeError('Peer IP matches this computer, or no local address exists.')
+    forwarding_disabled(IFACE.index)
+    state = {'config': dict(c, interface=IFACE.network_name), 'own_mac': normal_mac(IFACE.mac),
+             'ps5_mac': peer_mac(PS5), 'portal_mac': peer_mac(PORTAL)}
+    if len({state[k] for k in ('own_mac', 'ps5_mac', 'portal_mac')}) != 3:
+        raise RuntimeError('Expected three distinct devices; refusing proxy ARP/gateway mappings.')
+    return state
+
+
+def frames(state, restore=False):
+    a, b, own = state['ps5_mac'], state['portal_mac'], state['own_mac']
+    return [Ether(src=own, dst=a)/ARP(op=2, psrc=PORTAL, pdst=PS5, hwsrc=b if restore else own, hwdst=a),
+            Ether(src=own, dst=b)/ARP(op=2, psrc=PS5, pdst=PORTAL, hwsrc=a if restore else own, hwdst=b)]
+
+
+def open_socket(filter=None):
+    sock = conf.L2socket(iface=IFACE, filter=filter, promisc=True)
+    try:
+        if sock.pcap_fd.datalink() != 1:
+            raise RuntimeError('Adapter must expose Ethernet frames. Do not use Wi-Fi monitor mode.')
+        from scapy.libs.winpcapy import pcap_setmintocopy
+        if pcap_setmintocopy(sock.pcap_fd.pcap, 0) != 0:
+            raise RuntimeError('Npcap low-latency capture setup failed.')
+        sock.pcap_fd.setnonblock(True)
+        return sock
+    except BaseException:
+        sock.close()
+        raise
+
+
+def send_raw(sock, frame):
+    # pcap_inject / pcap_sendpacket return negative on failure. Do not ignore it.
+    sent = sock.pcap_fd.send(bytes(frame))
+    if sent not in (0, len(bytes(frame))):
+        raise RuntimeError('Npcap packet injection failed.')
+
+
+def restore(state):
+    sock = None
+    errors = []
+    try:
+        configure(state['config'])
+        sock = open_socket()
+        for _ in range(5):
+            for frame in frames(state, True):
+                send_raw(sock, frame)
+            time.sleep(.1)
+    except Exception as exc:
+        errors.append(f'{type(exc).__name__}: {exc}')
+    finally:
+        if sock is not None:
+            try:
+                sock.close()
+            except Exception as exc:
+                errors.append('Adapter close: ' + type(exc).__name__)
+    return errors
+
+
+class MachineLock:
+    """A named kernel object held by parent and watchdog until restoration ends."""
+    def __init__(self, existing=False):
+        from ctypes import wintypes
+        k = ctypes.WinDLL('kernel32', use_last_error=True)
+        k.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+        k.CreateMutexW.restype = wintypes.HANDLE
+        k.OpenMutexW.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.LPCWSTR]
+        k.OpenMutexW.restype = wintypes.HANDLE
+        k.CloseHandle.argtypes = [wintypes.HANDLE]
+        k.CloseHandle.restype = wintypes.BOOL
+        self.k = k
+        ctypes.set_last_error(0)
+        self.handle = k.OpenMutexW(0x00100000, False, MUTEX_NAME) if existing else k.CreateMutexW(None, False, MUTEX_NAME)
+        error = ctypes.get_last_error()
+        if not self.handle:
+            raise ctypes.WinError(error)
+        if not existing and error == 183:
+            self.close()
+            raise RuntimeError('Another Portal experiment or recovery watchdog is running.')
+
+    def close(self):
+        if self.handle:
+            self.k.CloseHandle(self.handle)
+            self.handle = None

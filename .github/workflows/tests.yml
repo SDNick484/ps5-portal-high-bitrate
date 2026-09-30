@@ -4,10 +4,11 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python: ['3.10', '3.12', '3.14']
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,3 +16,15 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s tests -v
+      - name: Linux shell and service syntax
+        if: runner.os == 'Linux'
+        run: |
+          sh -n Auto-Linux.sh
+          systemd-analyze verify service/portal-bitrate-auto.service 2> /tmp/unit-errors || { cat /tmp/unit-errors; ! grep -v 'not executable: No such file or directory' /tmp/unit-errors | grep -q .; }
+      - name: PowerShell parse check
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens=$null; $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path service/Auto-Windows.ps1),[ref]$tokens,[ref]$errors) | Out-Null
+          if ($errors.Count) { $errors | Format-List; exit 1 }
