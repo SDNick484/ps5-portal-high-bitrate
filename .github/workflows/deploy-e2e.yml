@@ -1,0 +1,39 @@
+name: Deploy end-to-end
+on:
+  push:
+    paths: ['deploy/**', '*.py', 'tests/**', 'requirements.txt', '.github/workflows/deploy-e2e.yml']
+  pull_request:
+    paths: ['deploy/**', '*.py', 'tests/**', 'requirements.txt', '.github/workflows/deploy-e2e.yml']
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer self-test failure regression
+        run: python3 deploy/tests/test_install.py
+      - name: shellcheck
+        run: |
+          shellcheck -S warning deploy/pve/create-lxc.sh deploy/tests/*.sh
+          shellcheck -S warning -s sh deploy/portal deploy/install-alpine.sh
+          shellcheck -S warning -s sh -e SC2034 deploy/portal-bitrate.initd
+
+  netns-e2e:
+    # Same layer-2 shape as an LXC on vmbr0, with network namespaces as PS5 and Portal.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ethtool libpcap0.8 python3-venv
+      - name: Install from this checkout (non-Alpine runner, so apk is skipped)
+        run: sudo env PORTAL_SKIP_APK=1 PORTAL_CONTAINER=1 PORTAL_SOURCE_REV="${GITHUB_SHA::7}" sh deploy/install-alpine.sh
+      - run: sudo bash deploy/tests/netns-e2e.sh
+
+  docker-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y ethtool
+      - run: docker build -f deploy/docker/Dockerfile --build-arg SOURCE_REV="${GITHUB_SHA::7}" -t portal-relay:local .
+      - run: sudo env IMAGE=portal-relay:local bash deploy/tests/docker-e2e.sh

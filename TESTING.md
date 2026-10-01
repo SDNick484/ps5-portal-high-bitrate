@@ -4,11 +4,12 @@
 ## v0.3.0 automation / Linux preview
 
 - OS version and architecture:
+- Deployment (native / Proxmox LXC / Docker macvlan) and host:
 - Ethernet/Wi-Fi adapter (and Npcap version on Windows):
 - Profile (65/100/200):
 - Baseline picture/control usable, recovery complete:
 - Foreground active trial and Portal display range:
-- Windows SYSTEM task / Linux systemd startup result:
+- Windows SYSTEM task / Linux systemd / container OpenRC or Docker startup result:
 - Fresh Portal disconnect/reconnect result:
 - Host reboot result:
 - Graceful stop recovery result:

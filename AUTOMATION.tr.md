@@ -20,7 +20,7 @@ Menüde `Start`, `Stop`, `Status`, `Uninstall` bulunur. Stop kalıcı durdurma i
 
 ## Linux
 
-İlk hedef: fiziksel Debian/Ubuntu benzeri sistem, Ethernet, Python 3.10+, iproute2, libpcap, systemd. Raspberry Pi OS kullanan Pi 3B için aşağıdaki kullanıcı başarı bildirimi var; işletim sistemi mimarisi/sürümü belirtilmediği için ARM64 uyumluluğu kanıtlanmış değil. WSL, Docker/VM ağı veya modem firmware'i desteklenen kurulum hedefi değil.
+İlk hedef: fiziksel Debian/Ubuntu benzeri sistem, Ethernet, Python 3.10+, iproute2, libpcap, systemd. Raspberry Pi OS kullanan Pi 3B için aşağıdaki kullanıcı başarı bildirimi var; işletim sistemi mimarisi/sürümü belirtilmediği için ARM64 uyumluluğu kanıtlanmış değil. WSL, NAT kullanan Docker/VM ağı veya modem firmware'i desteklenen kurulum hedefi değil. Ayrı deneysel Proxmox LXC / Linux Docker macvlan seçeneği aşağıda anlatılıyor.
 
 ```sh
 sudo apt update
@@ -52,12 +52,22 @@ Stop yeniden başlatmadan sonra da geçerli. Uninstall servisi kaldırır, özel
 
 Kullanıcı, Docker'ın açtığı/yeniden uyguladığı IPv4 forwarding ayarını çözmek zorunda kaldı. Röle forwarding açıkken başlamayı reddeder ve bu ayarı değiştirmez. [Docker belgelerine](https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-on-a-router) göre olağan iptables arka ucunda açılışta forwarding etkinleştirilebilir; bridge ağı forwarding gerektirir. Ortak Docker makinesinde bunu kapatmak container ağını bozabilir. Gereksinimler çakışıyorsa ayrı bir röle makinesi kullan; ayarı körlemesine kapatma veya kontrolü kaldırma. Bu rapor fiziksel Linux kurulumu içindir, Docker içinde röle çalıştırma doğrulaması değildir.
 
+## Proxmox LXC / Docker deneysel kurulum
+
+[SDNick484'in PR #1 katkısı](https://github.com/atameric/ps5-portal-high-bitrate/pull/1), mevcut röleyi Proxmox üzerinde küçük bir Alpine LXC container'ına veya Linux Docker üzerinde macvlan ağına kurar. Container, PS5/Portal ile aynı yerel ağda kendi MAC adresini kullanır. Kablolu host gerekir; Docker Desktop, WSL ve Wi-Fi macvlan kurulumu desteklenmez. Bitrate motoru değişmez.
+
+[İngilizce adım adım kurulum](deploy/README.md): Proxmox'ta kurucudan sonra container içinde `portal configure 65`, `portal baseline`, `portal try`, başarılıysa `portal enable` sırası izlenir. OpenRC servisi yeniden başlatmada açılabilir. Profil değiştirmek için servisi durdur, yeniden configure ve baseline yap, sonra başlat. Docker'da aynı adımlar Compose üzerinden uygulanır. Kurucuyu veya `portal` yardımcısını ortak fiziksel host üzerinde çalıştırma.
+
+**Firewall kapsamı:** Proxmox kurucusu yeni röle container'ının `net0` kartında `firewall=0` kullanır. Bu, o karttaki Proxmox filtrelemesini kapatır; host'un genel firewall'unu, router'ı veya diğer container'ları kapatmaz. Container bağlı olduğu LAN'a bu filtre olmadan açılır. Güvenilir LAN ve yalnız röleye ayrılmış container kullan; başka servis kurma veya Internet'e açma. Mevcut container'ın firewall ayarı otomatik değiştirilmez. Container içindeki IPv4 forwarding kapatılır; host'un ayarı korunur.
+
+Proxmox için katkı sahibinin gerçek PS5/Portal başarı bildirimi var. Docker için kendi fork'unda sahte ağ uçlarıyla başarılı testler var; gerçek cihaz doğrulaması yok. Biz yeni Linux/Proxmox/Docker donanım testi yapmadık. Tam dağıtım sürümleri, gerçek cihazda yeniden başlatma/çökme kurtarması, uzun süreli kararlılık ve Alpine dışındaki Gentoo/OpenRC kullanımı hâlâ test bekliyor. Deneysel destek olarak değerlendir.
+
 ## Arıza ve gizlilik
 
 Bağımsız kurtarıcı, program kapanınca veya takılınca Portal'ın ARP kaydını geri yüklemeye çalışır. Elektrik kesilmesi, ağ kablosunun çıkması, bilgisayarın uyuması veya iki sürecin birden öldürülmesi bunu engelleyebilir. Böyle bir durumda Portal bağlantısını yeniden kur. Başarısız kurtarma sonraki açılışı bloke eder. Kurtarma ve kilit kaldırma adımları [İngilizce kılavuzda](AUTOMATION.md); çalışan sürecin kilidini silme.
 
 `unique_modified_startups` sadece yerelde değiştirilip gönderilen başlangıç paketini sayar; PS5'in kabulünü veya gerçek bitrate'i kanıtlamaz. Portal göstergesi ve oynanabilir oturumla doğrula.
 
-IP forwarding açılmaz, firewall veya firmware değiştirilmez. Mevcut forwarding açıkken işlem reddedilir. Router IP rezervasyonları önemli.
+Fiziksel Windows/systemd servisi IP forwarding açmaz, firewall veya firmware değiştirmez; mevcut forwarding açıkken işlem reddedilir. Ayrı container kurulumunun forwarding ve kart filtreleme davranışı yukarıda anlatılmıştır. Router IP rezervasyonları önemli.
 
 Test raporuna işletim sistemi, adaptör, Windows'ta Npcap sürümü, profil, baseline/aktif/yeniden bağlanma/yeniden başlatma sonucu, gösterge aralığı ve takılma bilgisini yaz. **Gerçek IP/MAC içeren ayarları, runtime klasörlerini, pcap dosyalarını, `.env`, API anahtarı veya token paylaşma.** Ayrıntılar: [TESTING.md](TESTING.md).

@@ -1,0 +1,156 @@
+#!/bin/sh
+# portal - helper for the automatic relay (portal_auto.py) in a Proxmox LXC or Docker.
+# Installed by deploy/install-alpine.sh as /usr/local/bin/portal.
+set -eu
+
+APP=${PORTAL_APP:-/opt/portal-bitrate-auto}
+RT=${PORTAL_RUNTIME:-/var/lib/portal-bitrate-auto}
+CFG=${PORTAL_CONFIG:-/etc/portal-bitrate/auto-config.json}
+LOCK=/run/portal-lab-capture.lock          # upstream uses /var/run (a symlink to /run)
+LOGFILE=/var/log/portal-bitrate.log
+SVC=portal-bitrate
+PY="$APP/.venv/bin/python"
+
+auto()        { "$PY" "$APP/portal_auto.py" "$@"; }
+err()         { echo "portal: $*" >&2; }
+in_docker()   { [ -n "${PORTAL_CONTAINER:-}" ] || [ -f /.dockerenv ]; }
+has_openrc()  { command -v rc-service >/dev/null 2>&1 && [ -x "/etc/init.d/$SVC" ]; }
+svc_running() { has_openrc && rc-service -q "$SVC" status >/dev/null 2>&1; }
+
+need_stopped() {
+	if svc_running; then err "the service is running; run 'portal stop' first."; exit 1; fi
+	if [ -e "$LOCK" ]; then
+		err "a relay already holds $LOCK. Stop it first (Docker: 'docker compose down')."; exit 1
+	fi
+}
+
+forwarding_off() {
+	# The relay forwards in user space and refuses to start while the kernel forwards.
+	# A fresh LXC/Docker network namespace can inherit ip_forward=1 from its host.
+	sysctl -qw net.ipv4.ip_forward=0 >/dev/null 2>&1 || true
+	[ "$(cat /proc/sys/net/ipv4/ip_forward)" = 0 ] && return 0
+	if in_docker; then
+		err "IPv4 forwarding is on in this container. Keep 'sysctls: net.ipv4.ip_forward: \"0\"' in compose.yaml."
+	else
+		err "IPv4 forwarding is on and could not be turned off (sysctl -w net.ipv4.ip_forward=0)."
+	fi
+	return 1
+}
+
+check() {
+	forwarding_off || return 1
+	[ -f "$CFG" ] || { err "not configured. Run: portal configure 65"; return 1; }
+	if [ -e "$RT/recovery-required" ]; then
+		err "the last ARP repair was not confirmed. Run: portal repair"; return 1
+	fi
+	rm -f "$RT/disabled"   # upstream's stop marker; start/stop is handled by OpenRC/Docker here
+	auto verify-baseline --config "$CFG" --runtime "$RT" >/dev/null 2>&1 || {
+		err "no baseline for this config/code version. Run: portal baseline"; return 1; }
+}
+
+# Run the relay in the background so this shell can forward INT/TERM to it (Docker's
+# init and OpenRC's supervisor only signal us), then wait for the guardian. The
+# guardian lives in its own session and repairs the Portal's ARP entry when the relay
+# exits; if this shell exited first, Docker would kill the guardian mid-repair.
+run_relay() {
+	"$PY" -u "$APP/portal_auto.py" "$1" --config "$CFG" --runtime "$RT" &
+	relay=$!
+	trap 'kill -INT "$relay" 2>/dev/null || true' INT TERM
+	rc=0
+	while :; do
+		wait "$relay" && rc=0 || rc=$?
+		kill -0 "$relay" 2>/dev/null || break
+	done
+	trap - INT TERM
+	i=0
+	while pgrep -f 'portal_auto.py guardian' >/dev/null 2>&1 && [ "$i" -lt 45 ]; do
+		sleep 1; i=$((i + 1))
+	done
+	# Linux-based clients ignore an ARP change within ~1 s (locktime) of the previous one,
+	# so a stop right after the Portal switched to the relay can leave it pointing here
+	# for up to a minute. With relay and guardian both gone, wait out that window and
+	# send upstream's repair once more (the same frames as 'portal repair').
+	if [ -f "$RT/restore-state.json" ] && ! pgrep -f 'portal_auto.py guardian' >/dev/null 2>&1; then
+		sleep 1.5
+		printf 'STOPPED\n' | auto repair --runtime "$RT" >/dev/null 2>&1 ||
+			err "follow-up ARP repair failed; reconnect the Portal or run: portal repair"
+	fi
+	return "$rc"
+}
+
+openrc_only() {
+	has_openrc && return 0
+	if in_docker; then err "in Docker use: docker compose up -d | down | restart | logs -f"
+	else err "OpenRC service not installed."; fi
+	exit 1
+}
+
+[ "$(id -u)" = 0 ] || { err "run as root."; exit 1; }
+
+case "${1:-help}" in
+	configure)
+		need_stopped; forwarding_off
+		mkdir -p "$(dirname "$CFG")" "$RT"
+		echo "PS5 and Portal must both be awake. LAN interface inside the relay is 'eth0'."
+		auto configure --profile "${2:-65}" --config "$CFG" --runtime "$RT"
+		echo "Next: disconnect the Portal from the PS5, then: portal baseline" ;;
+	baseline)
+		need_stopped; forwarding_off
+		echo "60 s pass-through trial (bitrate unchanged). Connect the Portal after BASELINE READY."
+		run_relay baseline || true
+		auto verify-baseline --config "$CFG" --runtime "$RT" && echo "Next: portal try" ;;
+	try)
+		need_stopped; check
+		echo "Foreground active relay. Connect the Portal after AUTO READY; Ctrl+C stops and repairs ARP."
+		run_relay run || true
+		auto status --runtime "$RT" | sed -n '/status.json/,/^}/p' ;;
+	check)
+		check && echo "ok: ready to run" ;;
+	service)
+		# Long-running mode for OpenRC (supervise-daemon) and the Docker CMD.
+		check || { sleep 5; exit 1; }   # brief pause so a restart loop stays slow
+		run_relay run ;;
+	health)
+		"$PY" - "$RT/status.json" <<-'EOF'
+		import datetime, json, sys
+		s = json.load(open(sys.argv[1]))
+		age = (datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(s['time'])).total_seconds()
+		sys.exit(0 if s.get('state') == 'running' and age < 15 else 1)
+		EOF
+		;;
+	enable)
+		openrc_only; check
+		rc-update add "$SVC" default; rc-service "$SVC" start ;;
+	disable)
+		openrc_only
+		rc-service "$SVC" stop 2>/dev/null || true
+		rc-update del "$SVC" default 2>/dev/null || true ;;
+	start|stop|restart)
+		openrc_only; rc-service "$SVC" "$1" ;;
+	status)
+		if has_openrc; then rc-service "$SVC" status || true; fi
+		if [ -f "$CFG" ]; then
+			echo "profile: $(sed -n 's/.*"profile": *"\([0-9]*\)".*/\1/p' "$CFG") Mbps"
+		fi
+		auto status --runtime "$RT" ;;
+	log)
+		if [ -f "$LOGFILE" ]; then tail -n "${2:-40}" "$LOGFILE"; fi
+		echo "--- events"; tail -n 20 "$RT/events.log" 2>/dev/null || true ;;
+	repair)
+		if svc_running; then err "the service is running; run 'portal stop' first."; exit 1; fi
+		auto repair --runtime "$RT" ;;
+	version)
+		echo "portal relay, source $(cat "$APP/SOURCE_REV" 2>/dev/null || echo unknown)" ;;
+	*)
+		cat <<-'USAGE'
+		portal configure [65|100|200]  enroll the PS5 + Portal (IP and MAC) and pick the profile
+		portal baseline                60 s unchanged relay trial; required after configure or any update
+		portal try                     foreground active relay; Ctrl+C to stop
+		portal status | log [N] | version
+		portal repair                  re-send the Portal's correct ARP entry after an unclean stop
+		LXC/OpenRC:  portal enable | disable | start | stop | restart
+		Docker:      docker compose up -d | down | logs -f   (the container runs 'portal service')
+		Change profile: stop the service, then configure <N>, baseline, start again.
+		USAGE
+		;;
+esac

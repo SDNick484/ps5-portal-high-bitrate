@@ -1,0 +1,11 @@
+# BuildKit reads this instead of a root .dockerignore when building deploy/docker/Dockerfile.
+# Send only what the image needs; never local enrollment, runtime state or captures.
+*
+!portal_*.py
+!protocol.py
+!requirements.txt
+!LICENSE
+!tests/*.py
+!deploy/install-alpine.sh
+!deploy/portal
+!deploy/portal-bitrate.initd

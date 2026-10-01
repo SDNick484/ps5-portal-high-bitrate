@@ -1,0 +1,3 @@
+# Local enrollment (device IPs/MACs) and runtime state: never commit or share these.
+data/
+.env

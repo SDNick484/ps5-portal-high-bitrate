@@ -1,0 +1,28 @@
+#!/sbin/openrc-run
+# Experimental PS Portal one-way bitrate relay (portal_auto.py run).
+# Installed by deploy/install-alpine.sh as /etc/init.d/portal-bitrate.
+
+name="portal-bitrate"
+description="Experimental PlayStation Portal -> PS5 bitrate relay"
+supervisor=supervise-daemon
+command=/usr/local/bin/portal
+command_args="service"
+umask=077
+output_log=/var/log/portal-bitrate.log
+error_log=/var/log/portal-bitrate.log
+respawn_delay=30
+respawn_max=5
+respawn_period=900
+# SIGTERM -> 'portal service' forwards it to the relay, which stops redirecting and
+# hands off to its guardian; the guardian repairs the Portal's ARP entry for the PS5.
+# The relay waits up to 35 s for that, so give it 60 s before KILL.
+retry="TERM/60/KILL/5"
+
+depend() {
+	need net
+	after sysctl
+}
+
+start_pre() {
+	/usr/local/bin/portal check
+}
