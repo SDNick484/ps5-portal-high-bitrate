@@ -72,7 +72,9 @@ echo "==> Self-test: libpcap BPF compile + offline unit tests"
 	               'and src host 10.0.0.2 and dst host 10.0.0.1', linktype=DLT_EN10MB)
 	print('   BPF filter compile: ok')
 	EOF
-( cd "$APP" && .venv/bin/python -m unittest discover -s tests 2>&1 | tail -1 | sed 's/^/   unit tests: /' )
+# Keep unittest's exit status: a pipe to tail/sed would hide failures under POSIX sh.
+# Show the complete failure output and stop before publishing the helper/service.
+( cd "$APP" && .venv/bin/python -m unittest discover -s tests )
 find "$APP" -name __pycache__ -type d -prune -exec rm -rf {} +
 
 echo "==> Helper"

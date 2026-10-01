@@ -1,4 +1,4 @@
-# Proxmox LXC and Docker deployment (community)
+# Proxmox LXC and Docker deployment (experimental community preview)
 
 These files run the [automatic relay](../AUTOMATION.md) (`portal_auto.py run`) in a
 **Proxmox VE LXC** or a **Docker container** instead of on a native Linux host. The relay
@@ -17,7 +17,9 @@ provide that, which is why AUTOMATION.md lists them as unsupported. These two se
 
 Each gets its own network namespace, so the relay's "forwarding must be off" check
 applies to the container, not the host. The helper turns forwarding off inside the LXC;
-in Docker, `compose.yaml` sets it with `sysctls`. Nothing on the host is changed.
+in Docker, `compose.yaml` sets it with `sysctls`. Host IP forwarding stays unchanged
+when these scripts run inside the documented containers. Run the Alpine installer and
+`portal` helper only inside the relay container, not on a shared native host.
 
 ## Before you start
 
@@ -48,8 +50,17 @@ portal try            # connect after AUTO READY; check the Portal's network dis
 portal enable         # only after a good 'try': starts now and at boot
 ```
 
-PVE's firewall IP filter would drop the relay's ARP replies for the PS5's address, which
-is why the NIC has `firewall=0`. To update, re-run the script with `CTID=<id>`, then run
+**Firewall scope:** the script creates the relay CT with `firewall=0` on `net0`. This
+disables Proxmox firewall filtering on that container NIC so its ARP replies can use
+the PS5's address. It does not turn off the host-wide Proxmox firewall, router firewall,
+or filtering on other containers. The relay CT is exposed to its attached LAN without
+that NIC filtering. Use a trusted LAN, keep the CT dedicated to this relay, and do not
+install unrelated services or expose it to the Internet. If you require NIC filtering,
+review a narrowly scoped rule design before using this deployment; no such rule set
+has been validated here. An existing CT's firewall setting is only warned about,
+not automatically changed.
+
+To update, re-run the script with `CTID=<id>`, then run
 `portal baseline` again (the receipt is bound to the code).
 
 ## Docker (Linux host, macvlan)
@@ -110,9 +121,11 @@ The frames are the same ones `portal_auto.py repair` sends.
 IPv4 is being filtered on the host. The usual cause is Docker on the same host as the
 bridge the relay sits on (for example, Docker installed on the PVE host). Docker sets the
 iptables `FORWARD` policy to `DROP`, and `br_netfilter` sends bridged traffic through it.
-ARP still passes, so the Portal follows the relay, but its packets never arrive. Remove
-Docker from that host, or allow the bridge, for example
-`iptables -I DOCKER-USER -i vmbr0 -o vmbr0 -j ACCEPT`.
+ARP still passes, so the Portal follows the relay, but its packets never arrive. Inspect
+the host's bridge/firewall policy or use a dedicated relay host. Avoid blindly allowing
+all `vmbr0` traffic or removing Docker from a shared host; either can affect unrelated
+workloads and isolation. Any firewall exception must be scoped and reviewed for your
+own topology.
 
 **"IPv4 forwarding is enabled".** In Docker, keep the `sysctls` entry. In the LXC,
 `portal` turns it off automatically; if it can't, check `/etc/sysctl.d/90-portal-relay.conf`.
@@ -135,5 +148,18 @@ Ctrl+C, service stop, and a relay crash with restart. They check that:
 The workflow `.github/workflows/deploy-e2e.yml` runs them. They use synthetic packets
 built like the offline test fixture, not a real console.
 
-Real-device status: the Proxmox LXC path has been used with a real PS5 and Portal by the
-contributor. The Docker path is CI-only so far.
+`python3 deploy/tests/test_install.py` also runs the installer in a temporary sandbox
+with a controlled self-test result. It checks that a failed self-test stops installation
+before publishing the helper and that a successful self-test continues. It needs no
+root, container or network access.
+
+Real-device status: [contributor SDNick484](https://github.com/SDNick484) reports using
+the Proxmox LXC path with a real PS5 and Portal. This is a community report, not a
+maintainer hardware test or broad compatibility guarantee. The contributor's original
+commit passed synthetic network-namespace and Docker tests in their fork. Those tests
+use fake peers; Docker has no reported real PS5/Portal validation. Maintainer changes
+are checked locally on macOS and require fresh Linux/Proxmox/Docker testing. Exact
+Proxmox/Alpine versions, real-device reboot/crash recovery and long-duration stability
+still need reports. Gentoo/OpenRC outside the Alpine container has not been validated.
+
+This deployment contribution is from SDNick484 in [PR #1](https://github.com/atameric/ps5-portal-high-bitrate/pull/1).

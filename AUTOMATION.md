@@ -28,7 +28,7 @@ If installation rejects the Python path, reinstall Python for all users and recr
 
 ## Native Linux preview
 
-Initial target: Debian/Ubuntu-style native Linux with Ethernet, Python 3.10+, iproute2, libpcap and systemd. Other distributions require equivalent packages. A Raspberry Pi 3B running Raspberry Pi OS has a community success report below; its OS architecture/version was not supplied, so ARM64 compatibility is not established. WSL, Docker/VM networking, Android and router firmware are not supported deployment targets.
+Initial target: Debian/Ubuntu-style native Linux with Ethernet, Python 3.10+, iproute2, libpcap and systemd. Other distributions require equivalent packages. A Raspberry Pi 3B running Raspberry Pi OS has a community success report below; its OS architecture/version was not supplied, so ARM64 compatibility is not established. WSL, NAT-based Docker/VM networking, Android and router firmware are not supported deployment targets. The separate experimental Proxmox LXC / Linux Docker macvlan path is described below.
 
 ```sh
 sudo apt update
@@ -64,7 +64,7 @@ The tester had to resolve IPv4 forwarding being enabled/reapplied by Docker. Our
 
 ## Proxmox LXC and Docker (community)
 
-[deploy/](deploy/README.md) runs this same relay in an unprivileged Alpine LXC bridged on Proxmox VE, or in a Docker container on a `macvlan` network. Both give the relay its own MAC and network namespace on the PS5/Portal LAN, so this is not the NAT'd Docker/VM networking described above as unsupported. Forwarding is turned off only inside the container. The Proxmox path has a single contributor report with a real PS5 and Portal; the Docker path is so far tested only in CI with network-namespace fakes. The same baseline, foreground trial and reboot checks apply.
+[deploy/](deploy/README.md) runs this same relay in an unprivileged Alpine LXC bridged on Proxmox VE, or in a Linux Docker container on a `macvlan` network. Both give the relay its own MAC and network namespace on the PS5/Portal LAN. Forwarding is turned off only inside the documented container. Proxmox has a contributor report with a real PS5 and Portal; Docker has synthetic tests from the contributor's fork, with no real-device validation. These are optional experimental deployments. The same baseline, foreground trial and reboot checks apply. **The Proxmox creator disables filtering on the new relay CT's NIC (`firewall=0`), not the host-wide firewall; read the firewall scope and test limits in the deployment guide first.** Contribution: [SDNick484, PR #1](https://github.com/atameric/ps5-portal-high-bitrate/pull/1).
 
 ## Recovery and limitations
 
@@ -72,7 +72,7 @@ A separate guardian watches the relay's pipe/heartbeat. On normal stop or proces
 
 Power loss, cable removal, host sleep, capture-driver failure or terminating both processes can prevent repair. Reconnect Portal to refresh its network state, and check host logs. This is why a real crash/reboot test is still needed on each platform. If a stale recovery marker remains, first stop the task/service and verify no relay or guardian remains, then use `portal_auto.py repair` with the installed Python and the installed `--runtime` directory. It asks for `STOPPED` before sending repair frames. Do not delete a live lock to start a second relay.
 
-The service does not enable IP forwarding, edit a firewall, open a remote control port or change firmware. Existing forwarding causes a refusal. Keep DHCP reservations stable. Changed MAC enrollment is rejected when a conflicting live ARP response is observed at startup. This is not a defense against a hostile LAN.
+The native Windows/systemd service does not enable IP forwarding, edit a firewall, open a remote control port or change firmware. Existing forwarding causes a refusal. The optional container deployment has its own forwarding and NIC-filtering setup described above. Keep DHCP reservations stable. Changed MAC enrollment is rejected when a conflicting live ARP response is observed at startup. This is not a defense against a hostile LAN.
 
 To change profile or device addresses, stop/uninstall the service, configure again, repeat baseline and reinstall as described above. Start with 65; 100/200 are more demanding targets and may add stutter or latency without visible benefit.
 

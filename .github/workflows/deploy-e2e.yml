@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Installer self-test failure regression
+        run: python3 deploy/tests/test_install.py
       - name: shellcheck
         run: |
           shellcheck -S warning deploy/pve/create-lxc.sh deploy/tests/*.sh
