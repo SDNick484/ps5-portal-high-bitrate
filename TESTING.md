@@ -4,6 +4,7 @@
 ## v0.3.0 automation / Linux preview
 
 - OS version and architecture:
+- Deployment (native / Proxmox LXC / Docker macvlan) and host:
 - Ethernet/Wi-Fi adapter (and Npcap version on Windows):
 - Profile (65/100/200):
 - Baseline picture/control usable, recovery complete:

@@ -1,0 +1,44 @@
+# Automatic relay for Docker on a Linux host. Copy .env.example to .env and edit it first.
+# Run these from deploy/docker/:
+#
+#   docker compose build
+#   docker compose run --rm relay configure 65   # PS5 + Portal awake; interface: eth0
+#   docker compose run --rm relay baseline       # connect the Portal after BASELINE READY
+#   docker compose run --rm relay try            # connect after AUTO READY; Ctrl+C to stop
+#   docker compose up -d                         # always-on; restarts with the host
+#
+# The relay must be on the same layer-2 LAN as the PS5 and Portal with its own MAC and
+# IP, so it uses a macvlan network. Host networking will not work on a normal Docker
+# host: Docker enables IPv4 forwarding there and the relay refuses to run with it on.
+name: portal-relay
+
+services:
+  relay:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: portal-relay:local
+    init: true                 # reap zombies; 'portal service' forwards signals to the relay
+    restart: unless-stopped
+    stop_grace_period: 60s     # the relay hands off to its guardian, which repairs the Portal's ARP
+    cap_add: [NET_RAW]         # raw Ethernet send/receive (default on Docker, not on Podman)
+    sysctls:
+      net.ipv4.ip_forward: "0" # this namespace only; the relay refuses to run with forwarding on
+    tmpfs:
+      - /run                   # lock file; cleared on every container start
+    volumes:
+      - ./data/config:/etc/portal-bitrate
+      - ./data/runtime:/var/lib/portal-bitrate-auto
+    networks:
+      lan:
+        ipv4_address: ${RELAY_IP:?set RELAY_IP in .env}
+
+networks:
+  lan:
+    driver: macvlan
+    driver_opts:
+      parent: ${LAN_PARENT:?set LAN_PARENT in .env}
+    ipam:
+      config:
+        - subnet: ${LAN_SUBNET:?set LAN_SUBNET in .env}
+          gateway: ${LAN_GATEWAY:?set LAN_GATEWAY in .env}

@@ -62,6 +62,10 @@ Stop persists across reboot until Start. Uninstall disables/removes the unit, re
 
 The tester had to resolve IPv4 forwarding being enabled/reapplied by Docker. Our relay refuses to start with forwarding enabled and does not change that setting. [Docker documents](https://docs.docker.com/engine/network/packet-filtering-firewalls/#docker-on-a-router) that its usual iptables backend can enable forwarding at startup; Docker bridge networking requires forwarding. Disabling it on a shared Docker host can disrupt container networking. Use a dedicated relay host when those requirements conflict; do not blindly disable forwarding or remove the relay check. This report covers native Linux, not running this relay inside Docker.
 
+## Proxmox LXC and Docker (community)
+
+[deploy/](deploy/README.md) runs this same relay in an unprivileged Alpine LXC bridged on Proxmox VE, or in a Docker container on a `macvlan` network. Both give the relay its own MAC and network namespace on the PS5/Portal LAN, so this is not the NAT'd Docker/VM networking described above as unsupported. Forwarding is turned off only inside the container. The Proxmox path has a single contributor report with a real PS5 and Portal; the Docker path is so far tested only in CI with network-namespace fakes. The same baseline, foreground trial and reboot checks apply.
+
 ## Recovery and limitations
 
 A separate guardian watches the relay's pipe/heartbeat. On normal stop or process failure it sends corrective ARP replies; on a stalled relay it terminates the exact parent before repair. A recovery marker blocks restart after unconfirmed repair. On Linux the service gives the guardian a grace period before group termination. Windows uses a separate process group outside the task job, if the OS allows it.
